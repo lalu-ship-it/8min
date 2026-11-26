@@ -98,6 +98,12 @@ h1,h2,h3{font-family:var(--display);font-weight:400;margin:0;text-wrap:balance;l
 .tag{font-size:12px;font-weight:700;border-radius:6px;padding:1px 6px;margin-inline-start:6px;vertical-align:middle}
 .tag.w{background:#FCE9C4;color:#7A5300}
 .tag.c{background:#E6DEF8;color:#4B3391}
+.tag.band{background:var(--sun-soft);color:#7A5300;border:1px solid var(--sun)}
+.bandt[aria-pressed="true"]{background:var(--sun-soft);border-color:var(--sun)}
+.bandadj{width:100%;display:flex;flex-direction:column;gap:8px}
+.brow{display:flex;justify-content:space-between;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px;text-align:right}
+.bctl{display:flex;align-items:center;gap:10px}
+.bctl button{width:36px;height:36px;border-radius:50%;border:1.5px solid var(--line);background:var(--bg);font-size:14px}
 .tag.new{background:var(--sun);color:#3A2600}
 .start{background:var(--accent);color:#fff;border:0;border-radius:16px;padding:16px;font-size:20px;font-weight:800;width:100%;margin-top:12px}
 .start:active{transform:scale(.99)}
@@ -250,7 +256,7 @@ select{font:inherit;font-size:15px;max-width:60%;padding:6px 8px;border-radius:1
     <div class="donenote" id="doneNote" hidden></div>
     <div class="plan-head">
       <div><div class="gsmall" id="nextLbl">האימון של היום</div><span class="fmt" id="fmt">קלאסי</span><h2 id="plantitle">האימון של היום</h2><div class="plan-meta" id="planmeta"></div></div>
-      <button class="shuf" id="shuf" aria-label="ערבוב תרגילים">ערבבי 🔀</button>
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end"><button class="shuf" id="shuf" aria-label="ערבוב תרגילים">ערבבי 🔀</button><button class="shuf bandt" id="bandBtn" aria-pressed="false">🟡 יש גומיות?</button></div>
     </div>
     <ul class="plist" id="plist"></ul>
     <button class="start" id="startBtn">יאללה, מתחילות</button>
@@ -263,6 +269,7 @@ select{font:inherit;font-size:15px;max-width:60%;padding:6px 8px;border-radius:1
       <div class="row"><span style="font-weight:600">שפת ההדרכה</span><div class="seg" id="lang" role="group" aria-label="שפת ההדרכה"><button data-l="en" aria-pressed="true">English</button><button data-l="he" aria-pressed="false">עברית</button></div></div>
       <div class="row"><label for="vSel">קול</label><select id="vSel"></select></div>
       <div class="row"><label for="vRate">מהירות דיבור</label><input type="range" id="vRate" min="0.7" max="1.3" step="0.05" value="1"></div>
+      <div class="row"><label for="bandSetIn">הגומיות שלך, מהקלה לכבדה</label><input id="bandSetIn" type="text" style="max-width:55%;font:inherit;font-size:15px;padding:6px 8px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);color:var(--ink)"></div>
       <div class="row"><label for="bOn">צלילים</label><input type="checkbox" id="bOn" checked></div>
       <div class="row"><span class="note" id="vstatus">בודקת קולות…</span><button class="btn2" id="vTest">נסי את הקול</button></div>
       <p class="note"><b>לקול הכי ברור, הורידי קול איכותי פעם אחת.</b> באייפון: הגדרות › נגישות › תוכן מוקרא › קולות › English › בחרי קול שמסומן Enhanced או Premium (למשל Ava או Zoe) והורידי. באנדרואיד: הגדרות › נגישות › המרת טקסט לדיבור › Google › התקנת נתוני קול › English, בחרי קול באיכות גבוהה. אחר כך פתחי את העמוד מחדש ובחרי את הקול ברשימה. קולות עם ★ הם האיכותיים.</p>
@@ -328,6 +335,7 @@ select{font:inherit;font-size:15px;max-width:60%;padding:6px 8px;border-radius:1
     </div>
     <div class="box" id="box"><div class="gift" aria-hidden="true">🎁</div><div class="out" id="boxOut">יש לך הפתעה</div><button id="boxBtn">פתחי</button></div>
     <div class="news" id="news"></div>
+    <div class="bandadj" id="bandAdj" hidden></div>
     <h3>איך את מרגישה עכשיו?</h3>
     <div class="energy" data-k="eA"></div>
     <h3>כמה חזרות נשארו לך בסוף?</h3>
@@ -414,6 +422,7 @@ function prep(ex){
   for(let s=0;s<=20;s++){const P=poseAt(ex,s/20,false);const J=solve(P,ex.front);const dx=J0[ex._anchor][0]-J[ex._anchor][0];const b=bbox(J);mn=Math.min(mn,b[0]+dx);mx=Math.max(mx,b[1]+dx)}
   if(ex.prop==='wall'||ex.prop==='desk'){mx=Math.max(mx,J0.w1[0]+(ex.prop==='desk'?16:8))}
   if(ex.prop==='door'){mx=Math.max(mx,J0.w1[0]+30)}
+  if(ex.prop==='doorback'){mn=Math.min(mn,J0.hip[0]-62)}
   if(ex.prop==='table'){mx=Math.max(mx,J0.w1[0]+50);mn=Math.min(mn,J0.w1[0]-30)}
   if(ex.prop==='chair'){mn=Math.min(mn,J0.hip[0]-26)}
   if(ex.prop==='wallback'){mn=Math.min(mn,J0.hip[0]-22)}
@@ -441,6 +450,7 @@ function propSVG(ex,bed){
   }
   if(ex.prop==='wallback'){const x=J0.hip[0]+ox-20;s+=`<rect x="${x}" y="20" width="10" height="${GY-20}" fill="var(--prop)" rx="2"/>`}
   if(ex.prop==='door'){const x=J0.w1[0]+ox+18;s+=`<rect x="${x}" y="22" width="12" height="${GY-22}" fill="var(--prop)" rx="2"/><circle cx="${x-2}" cy="${J0.w1[1]+oy}" r="3.5" fill="var(--fig-far)"/>`}
+  if(ex.prop==='doorback'){const x=J0.hip[0]+ox-62;s+=`<rect x="${x}" y="22" width="12" height="${GY-22}" fill="var(--prop)" rx="2"/><circle cx="${x+14}" cy="${J0.sh[1]+oy+8}" r="3.5" fill="var(--fig-far)"/>`}
   if(ex.prop==='table'){const x=J0.w1[0]+ox,y=J0.w1[1]+oy-5;s+=`<g stroke="var(--prop)" stroke-width="6" stroke-linecap="round"><line x1="${x-30}" y1="${y}" x2="${x+50}" y2="${y}"/><line x1="${x+44}" y1="${y}" x2="${x+44}" y2="${GY}"/></g>`}
   if(ex.prop==='wall'){const x=J0.w1[0]+ox+5;s+=`<rect x="${x}" y="20" width="10" height="${GY-20}" fill="var(--prop)" rx="2"/>`}
   if(ex.prop==='desk'){const x=J0.w1[0]+ox, y=J0.w1[1]+oy+5;s+=`<g stroke="var(--prop)" stroke-width="5" stroke-linecap="round"><line x1="${x-14}" y1="${y}" x2="${x+40}" y2="${y}"/><line x1="${x-8}" y1="${y}" x2="${x-8}" y2="${GY}"/><line x1="${x+34}" y1="${y}" x2="${x+34}" y2="${GY}"/></g>`}
@@ -475,6 +485,11 @@ function figSVG(ex,ph,swap,bed){
     s+=`<circle cx="${f1(J.head[0])}" cy="${f1(J.head[1])}" r="${LEN.HR}" fill="${C}"/>`;
   }
   if(ex.prop==='door'){const J0=ex._J0,ox=ex._ax-J0[ex._anchor][0];const hx=J0.w1[0]+ox+16,hy=J0.w1[1]+ex._oy0;s+=`<path d="M${f1(J.w1[0])} ${f1(J.w1[1])} L${hx} ${hy} L${f1(J.w2[0])} ${f1(J.w2[1]+3)}" fill="none" stroke="var(--sun)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>`}
+  if(ex.band&&ex.band!=='door'){const B='var(--sun)';let p='';
+    if(ex.band==='feet')p=`M${f1(J.w1[0])} ${f1(J.w1[1])} L${f1(J.n1[0])} ${f1(J.n1[1]+3)} M${f1(J.w2[0])} ${f1(J.w2[1])} L${f1(J.n2[0])} ${f1(J.n2[1]+3)}`;
+    if(ex.band==='between')p=`M${f1(J.w1[0])} ${f1(J.w1[1])} L${f1(J.w2[0])} ${f1(J.w2[1])}`;
+    if(ex.band==='back'){const J0=ex._J0,ox=ex._ax-J0[ex._anchor][0];const ax=J0.hip[0]+ox-48,ay=J0.sh[1]+ex._oy0+8;p=`M${f1(J.w1[0])} ${f1(J.w1[1])} L${f1(ax)} ${f1(ay)} L${f1(J.w2[0])} ${f1(J.w2[1])}`}
+    s+=`<path d="${p}" fill="none" stroke="${B}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`}
   // near side
   s+=seg(J.L1,J.k1,11,C)+seg(J.k1,J.n1,10,C)+seg(J.n1,J.t1,6,C);
   s+=seg(J.A1,J.e1,9,C)+seg(J.e1,J.w1,8,C);
@@ -685,6 +700,35 @@ jacks:['Jumping jacks','Land softly on the balls of your feet','Switch back to s
 };
 const EN_EFFORT=['If it still feels easy, slow down and go deeper','The end should feel hard. That\'s the part that builds muscle','A few more good reps, as slow as you can','Seven or eight out of ten. Give a little more'];
 const EN_CHEERS=['You\'re doing great','Almost there. You\'re strong','Deep breath, keep going','This is how strength is built','Beautiful. Clean movement','Your garden is growing right now'];
+/* ---- resistance-band exercises (long bands with handles) ---- */
+Object.assign(EX,{
+ bandrow:{n:'חתירה עם גומייה',b:'ST',anchor:'n1',prop:'door',band:'door',per:3,fr:[{t:185,h:184,l1:6,s1:2,l2:6,s2:2,a1:92,f1:92,a2:90,f2:90},{t:181,h:180,l1:6,s1:2,l2:6,s2:2,a1:-35,f1:80,a2:-37,f2:78}],
+   tips:['גומייה בעוגן הדלת בגובה החזה, צעד אחורה עד שהיא מתוחה','מרפקים לאחור צמודים לגוף, השכמות נפגשות, וחוזרת לאט']},
+ facepull:{n:'משיכה לפנים',b:'ST',anchor:'n1',prop:'door',band:'door',per:3,fr:[{t:182,h:182,a1:120,f1:118,a2:118,f2:116},{t:180,h:184,a1:-100,f1:70,a2:-102,f2:68}],
+   tips:['עוגן בגובה העיניים, מושכת את הידיות אל הפנים','מרפקים גבוהים והחוצה, כתפיים מסתובבות לאחור. הכי טוב ליציבה']},
+ pullapart:{n:'פתיחת גומייה',b:'FR',front:1,band:'between',per:2.8,fr:[{a1:60,f1:-60,a2:-60,f2:60},{a1:90,f1:92,a2:-90,f2:-92}],
+   tips:['אוחזת בגומייה מול החזה בידיים ישרות','פותחת לצדדים עד שהגומייה נוגעת בחזה, השכמות נפגשות']},
+ chestpress:{n:'לחיצת חזה עם גומייה',b:'ST',anchor:'n1',prop:'doorback',band:'back',per:3,fr:[{t:176,h:178,l1:-8,s1:-8,l2:14,s2:6,a1:-40,f1:85,a2:-42,f2:83},{t:174,h:176,l1:-8,s1:-8,l2:14,s2:6,a1:88,f1:90,a2:86,f2:88}],
+   tips:['גב לדלת, עוגן בגובה החזה, רגל אחת קדימה','דוחפת קדימה עד שהידיים ישרות, וחוזרת לאט']},
+ bandsquat:{n:'סקוואט עם גומייה',b:'ST',anchor:'n1',band:'feet',per:3.2,fr:[{a1:40,f1:175,a2:36,f2:172},{t:146,h:160,l1:80,s1:-24,l2:80,s2:-24,a1:75,f1:165,a2:71,f2:162}],
+   tips:['עומדת על הגומייה, הידיות ליד הכתפיים','ישבן אחורה, עקבים דוחפים, הגומייה מתנגדת בעלייה']},
+ bandrdl:{n:'דדליפט עם גומייה',b:'ST',anchor:'n1',band:'feet',per:3.6,fr:[{a1:2,f1:2,a2:0,f2:0,l1:4,l2:4},{t:110,h:110,a1:2,f1:0,a2:0,f2:-2,l1:12,s1:-6,l2:12,s2:-6}],
+   tips:['עומדת על הגומייה, ידיים ישרות, ברכיים רכות','ישבן אחורה וגב ישר, ועולה בכיווץ של הישבן']},
+ bandpress:{n:'לחיצת כתפיים עם גומייה',b:'FR',front:1,band:'feet',per:3,fr:[{a1:90,f1:178,a2:-90,f2:-178},{a1:162,f1:170,a2:-162,f2:-170}],
+   tips:['עומדת על הגומייה, הידיות בגובה הכתפיים','דוחפת למעלה בלי לקמר את הגב, יורדת לאט']}
+});
+Object.assign(EN,{
+ bandrow:['Band row','Band in the door anchor at chest height. Step back until it\'s tight','Elbows back, close to your body. Squeeze your shoulder blades, and return slowly'],
+ facepull:['Face pull','Anchor at eye level. Pull the handles toward your face','Elbows high and wide. Rotate your shoulders back. Best one for posture'],
+ pullapart:['Band pull apart','Hold the band in front of your chest, arms straight','Pull it apart until it touches your chest. Shoulder blades meet'],
+ chestpress:['Band chest press','Back to the door, anchor at chest height, one foot forward','Push forward until your arms are straight, and return slowly'],
+ bandsquat:['Band squat','Stand on the band, handles at your shoulders','Hips back, push through your heels. The band fights you on the way up'],
+ bandrdl:['Band deadlift','Stand on the band, arms straight, soft knees','Hips back, flat back, and stand up by squeezing your glutes'],
+ bandpress:['Band shoulder press','Stand on the band, handles at shoulder height','Press up without arching your back. Lower slowly']
+});
+const BAND_IDS=new Set(['bandrow','facepull','pullapart','chestpress','bandsquat','bandrdl','bandpress']);
+const BAND_START={bandsquat:1,bandrdl:1};
+const COLOR_EN={'צהוב':'yellow','אדום':'red','ירוק':'green','כחול':'blue','שחור':'black','סגול':'purple','כתום':'orange','ורוד':'pink','אפור':'gray','לבן':'white','חום':'brown','תכלת':'light blue'};
 /* ================= HELPERS ================= */
 const $=id=>document.getElementById(id);
 function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
@@ -697,12 +741,12 @@ const daysBetween=(a,b)=>Math.round((new Date(b+'T12:00:00')-new Date(a+'T12:00:
 
 /* ================= PROGRAM ================= */
 const GROUPS={
-  legs:[['sitstand',1],['calf',1],['wallsit',2],['squat',2],['sumo',3],['sidelunge',3],['pulse',4],['lunge',5]],
-  push:[['wallpush',1],['deskpush',3],['kneepush',5],['pushup',9]],
+  legs:[['bandsquat',1],['sitstand',1],['calf',1],['wallsit',2],['squat',2],['sumo',3],['sidelunge',3],['pulse',4],['lunge',5]],
+  push:[['chestpress',1],['bandpress',2],['wallpush',1],['deskpush',3],['kneepush',5],['pushup',9]],
   core:[['toetaps',1],['deadbug',1],['birddog',1],['sidecrunch',1],['kneeplank',2],['reversecrunch',3],['bearhold',3],['bicycle',4],['plank',5],['shouldertap',6],['climber',7]],
-  glute:[['bridge',1],['sideleg',1],['standkick',1],['goodmorning',1],['donkey',2],['sldl',4],['bridgemarch',5],['slbridge',6]],
-  pull:[['towelrow',1],['tablerow',4]],
-  back:[['yraise',1],['wyraise',1],['swimmer',3],['superman',4]],
+  glute:[['bandrdl',1],['bridge',1],['sideleg',1],['standkick',1],['goodmorning',1],['donkey',2],['sldl',4],['bridgemarch',5],['slbridge',6]],
+  pull:[['bandrow',1],['facepull',1],['towelrow',1],['tablerow',4]],
+  back:[['pullapart',1],['yraise',1],['wyraise',1],['swimmer',3],['superman',4]],
   cardio:[['march',1],['stepjack',2],['highknees',3],['climber',7],['jacks',8]]
 };
 const TIER={};Object.values(GROUPS).forEach(g=>g.forEach(([id,t])=>{TIER[id]=Math.min(TIER[id]??99,t)}));
@@ -715,28 +759,35 @@ const FOCUS=[
 const FORMATS={classic:'קלאסי',double:'סבב כפול',pyramid:'פירמידה',tabata:'טבטה עדינה'};
 const WARMS=[['march',1],['armcircles',1],['sidecrunch',1],['stepjack',2],['highknees',3]];
 const STRETCH=['child','catcow','quad','sphinx','fold','neck','chestst','kneechest','supinetwist'];
-const CHAIR=[['towelrow',1],['kneeext',1],['sitstand',1],['deskpush',1],['squeeze',1],['reach',1],['calf',1],['goodmorning',1],['standkick',2],['pulse',4]];
+const CHAIR=[['pullapart',1],['bandrow',1],['facepull',1],['towelrow',1],['kneeext',1],['sitstand',1],['deskpush',1],['squeeze',1],['reach',1],['calf',1],['goodmorning',1],['standkick',2],['pulse',4]];
 const BED=[['bridge',1],['heelslide',1],['slr',1],['sidelying',1],['toetaps',1],['deadbug',2],['reversecrunch',3],['bicycle',4],['bridgemarch',5],['slbridge',6]];
-const POSTURE=['towelrow','squeeze','wyraise','chestst','neck','reach'];
+const POSTURE=['facepull','pullapart','towelrow','squeeze','wyraise','chestst','neck','reach'];
 const timing=L=>({w:Math.min(45,30+3*(L-1)),r:Math.max(10,20-2*(L-1))});
 
+const bandsOn=()=>!!S.settings.bands;
+const okBand=id=>!BAND_IDS.has(id)||bandsOn();
+const bW=id=>BAND_IDS.has(id)?3:1;
+function bandSet(){const s=(S.bandSet||'צהוב, אדום, ירוק, כחול, שחור').split(/[,،]/).map(x=>x.trim()).filter(Boolean);return s.length?s:['צהוב']}
+function bandIdx(id){const n=bandSet().length;const i=(S.bandLvl&&S.bandLvl[id]!=null)?S.bandLvl[id]:(BAND_START[id]||0);return Math.max(0,Math.min(n-1,i))}
+const bandColor=id=>bandSet()[bandIdx(id)];
+const bandColorEn=id=>{const c=bandColor(id);return COLOR_EN[c]||c};
 function seenSet(){const s=new Set();S.sessions.forEach(x=>(x.ids||[]).forEach(i=>s.add(i)));return s}
 function pickG(group,L,r,used,avoid,seen){
-  let c=GROUPS[group].filter(([id,t])=>t<=L&&!used.has(id));
+  let c=GROUPS[group].filter(([id,t])=>t<=L&&!used.has(id)&&okBand(id));
   const c2=c.filter(([id])=>!avoid.has(id)); if(c2.length)c=c2;
-  if(!c.length){for(const g of FB[group]){c=GROUPS[g].filter(([id,t])=>t<=L&&!used.has(id));if(c.length)break}}
+  if(!c.length){for(const g of FB[group]){c=GROUPS[g].filter(([id,t])=>t<=L&&!used.has(id)&&okBand(id));if(c.length)break}}
   if(!c.length)return GROUPS[group][0][0];
-  return wpick(r,c,([id,t])=>(1+2*t/L)*(seen.has(id)?1:1.6))[0];
+  return wpick(r,c,([id,t])=>(1+2*t/L)*(seen.has(id)?1:1.6)*bW(id))[0];
 }
 function pickPool(pool,L,r,k,avoid,seen){
-  let c=pool.filter(([,t])=>t<=L);const fresh=c.filter(([id])=>!avoid.has(id));
+  let c=pool.filter(([id,t])=>t<=L&&okBand(id));const fresh=c.filter(([id])=>!avoid.has(id));
   const out=[];const used=new Set();
   for(let i=0;i<k;i++){let cc=(fresh.length>=k?fresh:c).filter(([id])=>!used.has(id));if(!cc.length)cc=c.filter(([id])=>!used.has(id));if(!cc.length)break;
-    const id=wpick(r,cc,([id,t])=>(1+t/L)*(seen.has(id)?1:1.5))[0];used.add(id);out.push(id)}
+    const id=wpick(r,cc,([id,t])=>(1+t/L)*(seen.has(id)?1:1.5)*bW(id))[0];used.add(id);out.push(id)}
   return out;
 }
 function buildPlan(mode,L,n,reroll){
-  const r=rng(n*7919+reroll*104729+mode.length*31+1);
+  const r=rng(n*7919+reroll*104729+mode.length*31+1+(bandsOn()?7:0));
   const {w,r:R}=timing(L);
   const last=[...S.sessions].reverse().find(s=>s.mode===mode);
   const avoid=new Set(last?last.ids||[]:[]);
@@ -772,7 +823,7 @@ function buildPlan(mode,L,n,reroll){
     ['kneechest','supinetwist','breath'].forEach(id=>add('cool',id,30));
   } else {
     title='הפסקת יציבה';titleEn='Posture break';
-    ['chintuck',...shuffle(r,POSTURE)].forEach((id,i,a)=>{add(i<3?'work':'cool',id,30);if(i<a.length-1)add('rest',null,4)});
+    ['chintuck',...shuffle(r,POSTURE.filter(okBand))].forEach((id,i,a)=>{add(i<3?'work':'cool',id,30);if(i<a.length-1)add('rest',null,4)});
   }
   steps.unshift({type:'ready',id:steps[0].id,dur:10});
   const secs=steps.reduce((s,x)=>s+x.dur,0);
@@ -799,7 +850,7 @@ function norm(x){const d={...S,...x};d.settings={...S.settings,...(x.settings||{
 function lsLoad(){try{const x=JSON.parse(localStorage.getItem(KEY)||'null');if(x&&x.v)return x}catch(e){}return null}
 function lsSave(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 const loc=lsLoad(); if(loc) S=norm(loc);
-let dbRef=null;const VER='גרסה 8';let SYNC='';function setSync(t){SYNC=t;const el=$('sync');if(el)el.textContent=VER+' · '+t}
+let dbRef=null;const VER='גרסה 9';let SYNC='';function setSync(t){SYNC=t;const el=$('sync');if(el)el.textContent=VER+' · '+t}
 const SEED={v:2,points:2,xp:160,start:'2026-11-09',freezes:2,frozen:[],badges:{first:'2026-11-09',test1:'2026-11-09'},tests:[{d:'2026-11-09',chair:null,push:null,pushVar:'wallpush',plank:null}],weights:[],kg:68,reroll:0,settings:{voice:true,rate:1,beep:true,lang:'en'},sessions:[{d:'2026-11-09',ts:1794222000000,mode:'full',fmt:'classic',level:1,secs:450,kcal:25,ids:['march','armcircles','calf','bridge','sidecrunch','sitstand','standkick','deadbug'],feel:'ok',eB:null,eA:null,partial:false,xp:110}]};
 function initDB(){
   if(!loc){S=norm(JSON.parse(JSON.stringify(SEED)));lsSave();render()}
@@ -965,11 +1016,12 @@ function render(){
     if(s.type==='rest'||s.type==='ready')return;
     if(s.round===2)return;
     const ex=EX[s.id];const li=document.createElement('li');
-    const tag=s.type==='warm'?'<span class="tag w">חימום</span>':s.type==='cool'?'<span class="tag c">מתיחה</span>':(!seen.has(s.id)&&S.sessions.length?'<span class="tag new">חדש!</span>':'');
+    const tag=(BAND_IDS.has(s.id)?`<span class="tag band">גומייה: ${bandColor(s.id)}</span>`:'')+(s.type==='warm'?'<span class="tag w">חימום</span>':s.type==='cool'?'<span class="tag c">מתיחה</span>':(!seen.has(s.id)&&S.sessions.length?'<span class="tag new">חדש!</span>':''));
     const dur=s.round?`${s.dur}×2 שנ׳`:`${s.dur} שנ׳`;
     li.innerHTML=`<svg viewBox="0 0 260 190" aria-hidden="true"></svg><div class="nm"><b>${ex.n}${tag}</b><small>${ex.tips[0]}</small></div><span class="sec">${dur}</span>`;
     ul.appendChild(li);thumbs.push({svg:li.querySelector('svg'),ex,bed:MODE==='bed'});
   });
+  $('bandBtn').setAttribute('aria-pressed',String(bandsOn()));$('bandBtn').textContent=bandsOn()?'🟡 עם גומיות':'🟡 יש גומיות?';$('bandSetIn').value=bandSet().join(', ');
   $('vOn').checked=S.settings.voice;$('bOn').checked=S.settings.beep;$('vRate').value=S.settings.rate;pickVoice();
   window.__plan=plan;
   if(VIEW==='stats')renderStats();
@@ -1122,15 +1174,15 @@ function enterStep(){
     $('side').textContent='';
     if(s.type==='ready')say(`מתחילות. ${PL.plan.title}.`+(strengthMode(PL.plan)?' הכלל להיום: כל תרגיל צריך להיגמר קשה, בערך שבע או שמונה מתוך עשר.':'')+` ראשון: ${EX[exStep.id].n}.`,`Let's start. ${PL.plan.titleEn}.`+(strengthMode(PL.plan)?' Today\'s rule: every exercise should end hard. About a seven or eight out of ten.':'')+` First up: ${EN[exStep.id][0]}.`);
     else if(s.roundBreak)say(`חצי עבר. סבב שני, אותם תרגילים. הבא: ${EX[exStep.id].n}`,`Halfway there. Round two, same exercises. Next up: ${EN[exStep.id][0]}`);
-    else if(exStep)say(`מנוחה. הבא: ${EX[exStep.id].n}`,`Rest. Next up: ${EN[exStep.id][0]}`);
+    else if(exStep)say(`מנוחה. הבא: ${EX[exStep.id].n}`+(BAND_IDS.has(exStep.id)?`, עם גומייה ${bandColor(exStep.id)}`:''),`Rest. Next up: ${EN[exStep.id][0]}`+(BAND_IDS.has(exStep.id)?`, with the ${bandColorEn(exStep.id)} band`:''));
   } else {
     const ex=EX[s.id];
     $('exname').textContent=ex.n;$('tip').textContent=ex.tips[0];
     const nx=nextExStep(PL.i);$('pnext').textContent=nx?`אחר כך: ${EX[nx.id].n}`:'התרגיל האחרון!';
     const tempo=s.type==='work'&&strengthMode(PL.plan)&&PL.plan.level>=3&&TEMPO.has(s.id);
-    $('side').textContent=ex.side?'צד ראשון':(s.type==='work'&&strengthMode(PL.plan)?(tempo?'ירידה בשלוש שניות · מאמץ 7–8 מתוך 10':'מאמץ 7–8 מתוך 10'):'');
+    $('side').textContent=(BAND_IDS.has(s.id)?`גומייה: ${bandColor(s.id)} · `:'')+(ex.side?'צד ראשון':(s.type==='work'&&strengthMode(PL.plan)?(tempo?'ירידה בשלוש שניות · מאמץ 7–8 מתוך 10':'מאמץ 7–8 מתוך 10'):''));
     const prev=PL.plan.steps[PL.i-1];const announced=prev&&(prev.type==='rest'||prev.type==='ready');
-    say((announced?`יאללה. ${ex.tips[0]}`:`${ex.n}. ${ex.tips[0]}`)+(tempo?'. ירידה לאט, שלוש שניות.':''),(announced?`Go. ${EN[s.id][1]}`:`${EN[s.id][0]}. ${EN[s.id][1]}`)+(tempo?'. Lower slowly, three seconds down.':''));
+    say((announced?`יאללה. ${ex.tips[0]}`:`${ex.n}. ${ex.tips[0]}`)+(tempo?'. ירידה לאט, שלוש שניות.':'')+(BAND_IDS.has(s.id)?`. גומייה ${bandColor(s.id)}.`:''),(announced?`Go. ${EN[s.id][1]}`:`${EN[s.id][0]}. ${EN[s.id][1]}`)+(tempo?'. Lower slowly, three seconds down.':'')+(BAND_IDS.has(s.id)?`. Use the ${bandColorEn(s.id)} band.`:''));
     if(!nx&&s.type!=='cool')setTimeout(()=>say('האחרון, תני הכל','Last one. Give it everything',false),2500);
     beep(1046,.18);
   }
@@ -1222,11 +1274,19 @@ function finish(partial){
   else p=['עוד יום של כוח. כל אימון קצר מצטבר.','זה בדיוק מה שהגוף צריך: מעט, אבל כל יום.','התמדה מנצחת עוצמה. והתמדת.','עוד עלה בגינה. עוד שכבה של כוח.'][total%4];
   $('dpraise').textContent=p;
   renderNews(news);
+  renderBandAdj(ids);
   BOXED=false;$('box').classList.remove('shake');$('boxOut').textContent='יש לך הפתעה';$('boxBtn').hidden=false;
   $('fbmsg').textContent='';[...$('fb').children].forEach(b=>b.setAttribute('aria-pressed','false'));resetEnergy('eA');EA=null;
   $('done').classList.add('on');$('done').scrollTop=0;
   setTimeout(()=>{confetti();fanfare()},150);
   say(partial?'כל הכבוד. גם חלק נחשב.':`סיימת. כל הכבוד! הרווחת ${xp} נקודות.`,partial?'Well done. Part of a workout still counts.':`Done! Amazing work. You earned ${xp} points.`);
+}
+function renderBandAdj(ids){
+  const b=ids.filter(id=>BAND_IDS.has(id));const el=$('bandAdj');
+  if(!b.length){el.hidden=true;el.innerHTML='';return}
+  el.hidden=false;
+  el.innerHTML='<h3>הגומיות לפעם הבאה</h3><p class="note" style="margin:0">היה קל? עלי צבע. לא הצלחת לסיים? רדי צבע.</p>'+b.map(id=>`<div class="brow"><span>${EX[id].n}</span><span class="bctl"><button data-id="${id}" data-d="-1" aria-label="גומייה קלה יותר">▼</button><b>${bandColor(id)}</b><button data-id="${id}" data-d="1" aria-label="גומייה כבדה יותר">▲</button></span></div>`).join('');
+  el.querySelectorAll('button').forEach(x=>x.onclick=()=>{const id=x.dataset.id;S.bandLvl=S.bandLvl||{};const n=bandSet().length;S.bandLvl[id]=Math.max(0,Math.min(n-1,bandIdx(id)+(+x.dataset.d)));save();renderBandAdj(b)});
 }
 function renderNews(news){$('news').innerHTML=news.map(([i,b,s])=>`<div><i>${i}</i><span><b>${b}</b><small>${s}</small></span></div>`).join('')}
 function animateXP(target,from=0){const el=$('dxp');const st=performance.now();(function f(n){const k=Math.min(1,(n-st)/900);el.textContent=`+${Math.round(from+(target-from)*k)} XP`;if(k<1)requestAnimationFrame(f)})(st)}
@@ -1311,6 +1371,8 @@ function closeTest(){TT=null;$('test').classList.remove('on');$('tabs').hidden=f
 
 /* ================= WIRING ================= */
 $('startBtn').onclick=startWorkout;
+$('bandBtn').onclick=()=>{S.settings.bands=!bandsOn();save();render();chime()};
+$('bandSetIn').onchange=e=>{S.bandSet=e.target.value;save();render()};
 $('shuf').onclick=()=>{S.reroll=(S.reroll||0)+1;lsSave();render();chime()};
 $('tcBtn').onclick=openTest;$('stTest').onclick=openTest;
 $('vOn').onchange=e=>{S.settings.voice=e.target.checked;save()};
